@@ -1,7 +1,7 @@
 <!-- # ⭕ Tic-Tac-Toe -->
 
 [//]: # (<img alt="workshop/tictactoe" width="1412" src="../.resources/tictactoe.png">)
-
+Hello My name is Ilya. My Discorde: ilya8828
 A standard game of Tic-Tac-Toe in Leo.
 
 ⭕ ❕ ⭕ ❕ ❌
