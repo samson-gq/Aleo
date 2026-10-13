@@ -83,11 +83,16 @@ class ArcusClient:
     def market(self, market_id: int) -> dict:
         return next(m for m in self.markets(market_id))
 
-    def bbo(self, market: int):
-        return self.get(f"/v1/bbo?market={market}")
+    def bbo(self, market: str):
+        """Best bid/offer for a ticker, derived from the book snapshot."""
+        book = self.l2(market, depth=1)
+        bids, asks = book.get("bids") or [], book.get("asks") or []
+        return {"bestBid": bids[0] if bids else None,
+                "bestAsk": asks[0] if asks else None}
 
-    def l2(self, market: int, depth: int = 20):
-        return self.get(f"/v1/l2/{market}?depth={depth}")
+    def l2(self, market: str, depth: int = 20):
+        """GET /v1/l2OrderBook/{market}?nLevels=N — verified live path."""
+        return self.get(f"/v1/l2OrderBook/{market}?nLevels={depth}")
 
     def account(self, address: str | None = None):
         addr = (address or self.address).lower()

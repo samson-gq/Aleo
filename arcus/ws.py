@@ -152,14 +152,16 @@ class ArcusWS:
 
     async def place_order(self, market_id: int, side: str, quantity: str,
                           price: str, tick: str, step: str, tif: str = "GTT",
-                          good_til_us: int | None = None) -> dict:
+                          good_til_us: int | None = None,
+                          reduce_only: int = 0) -> dict:
         if good_til_us is None:
             good_til_us = int(time.time() * 1_000_000) + 40 * 86_400 * 1_000_000
         ts = time.time_ns()
         payload = (f'{{"ad":"{self.address.lower()}","ai":{self.account_index},'
                    f'"ct":{ts},"g":{good_til_us * 1000},"m":{market_id},"op":1,'
                    f'"p":{to_int(price, tick)},"q":{to_int(quantity, step)},'
-                   f'"r":0,"s":{SIDE[side.upper()]},"t":{TIF[tif]},"v":1}}')
+                   f'"r":{reduce_only},"s":{SIDE[side.upper()]},'
+                   f'"t":{TIF[tif]},"v":1}}')
         sig = sign_typed_payload(self.priv, payload)
         body = {"address": self.address, "accountIndex": self.account_index,
                 "marketId": market_id, "orderSide": side.upper(),
@@ -175,3 +177,12 @@ class ArcusWS:
         body = {"address": self.address, "accountIndex": self.account_index,
                 "marketId": market_id, "kind": "orderId", "orderId": order_id}
         return await self.post("cancelOrder", body, sig, ts)
+
+    async def cancel_all_orders(self, market_id: int | None = None) -> dict:
+        """Scheme 2 over WS: cancel every resting order for this subaccount."""
+        ts = time.time_ns()
+        body = {"address": self.address, "accountIndex": self.account_index}
+        if market_id is not None:
+            body["marketId"] = market_id
+        sig = sign_legacy(self.priv, ts, "cancelAllOrders", body)
+        return await self.post("cancelAllOrders", body, sig, ts)
